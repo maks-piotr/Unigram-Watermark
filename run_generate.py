@@ -89,7 +89,7 @@ def main(args):
         }))
 
         # Write intermediate results
-        if (idx + 1) % 100 == 0:
+        if (idx + 1) % 10 == 0:
             write_file(output_file, outputs)
             outputs = []
 
@@ -105,10 +105,10 @@ if __name__ == "__main__":
     parser.add_argument("--fraction", type=float, default=0.5)
     parser.add_argument("--strength", type=float, default=2.0)
     parser.add_argument("--wm_key", type=int, default=0)
-    parser.add_argument("--prompt_file", type=str, default="./data/LFQA/inputs.jsonl")
+    parser.add_argument("--prompt_file", type=str, default="./data/LFQA/inputs_small.jsonl")
     parser.add_argument("--output_dir", type=str, default="./data/LFQA/")
-    parser.add_argument("--max_new_tokens", type=int, default=300)
-    parser.add_argument("--num_test", type=int, default=500)
+    parser.add_argument("--max_new_tokens", type=int, default=40)
+    parser.add_argument("--num_test", type=int, default=200)
     parser.add_argument("--beam_size", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=None)
     parser.add_argument("--top_p", type=float, default=0.9)
