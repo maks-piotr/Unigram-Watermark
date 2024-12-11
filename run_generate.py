@@ -24,7 +24,7 @@ def main(args):
     if 'llama' in args.model_name.lower():
         tokenizer = LlamaTokenizer.from_pretrained(args.model_name, use_fast=False)
     else:
-        tokenizer = GPT2LMHeadModel.from_pretrained(args.model_name)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
         
     model = GPT2LMHeadModel.from_pretrained(args.model_name, device_map='auto', offload_folder='./offload_folder')
     # model.to("cuda" if torch.cuda.is_available() else "cpu")  # Explicitly move model to correct device
