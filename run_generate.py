@@ -26,7 +26,7 @@ def main(args):
     else:
         tokenizer = GPT2LMHeadModel.from_pretrained(args.model_name)
         
-    model = GPT.from_pretrained(args.model_name, device_map='auto', offload_folder='./offload_folder')
+    model = GPT2LMHeadModel.from_pretrained(args.model_name, device_map='auto', offload_folder='./offload_folder')
     # model.to("cuda" if torch.cuda.is_available() else "cpu")  # Explicitly move model to correct device
     print("Using device: ", model.device)
     model.eval()
