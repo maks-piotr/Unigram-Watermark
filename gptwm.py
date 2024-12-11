@@ -10,18 +10,12 @@ class GPTWatermarkBase:
     def __init__(self, fraction: float = 0.5, strength: float = 2.0, vocab_size: int = 50257, watermark_key: int = 0, excluded_tokens: List[str] = None):
         rng = np.random.default_rng(self._hash_fn(watermark_key))
 
-        print("HERE")
-
         all_tokens = [str(i) for i in range(vocab_size)]
         if excluded_tokens:
             all_tokens = [token for token in all_tokens if all(any(char not in token for char in excluded_tokens))]
         
-        print("HERE I")
-        
         mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens))))
         rng.shuffle(mask)
-
-        print("HERE I AM")
 
         mask_indices = [int(token) for token in all_tokens if token.isdigit()]
         self.green_list_mask = torch.zeros(vocab_size, dtype=torch.float32)

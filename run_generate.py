@@ -31,8 +31,6 @@ def main(args):
     print("Using device: ", model.device)
     model.eval()
 
-    print("HERE")
-
     watermark_processor = LogitsProcessorList([GPTWatermarkLogitsWarper(
         fraction=args.fraction,
         strength=args.strength,
