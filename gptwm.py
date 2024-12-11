@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 from scipy.stats import norm
 import torch
-from transformers import LogitsWarper
+from transformers import LogitsWarper, GPT2Tokenizer
 
 
 class GPTWatermarkBase:
@@ -11,8 +11,17 @@ class GPTWatermarkBase:
         rng = np.random.default_rng(self._hash_fn(watermark_key))
 
         all_tokens = [str(i) for i in range(vocab_size)]
+        print(f"Before filtering: {len(all_tokens)}")
+
         if excluded_tokens:
-            all_tokens = [token for token in all_tokens if all(char not in token for char in excluded_tokens)]
+            tokenizer = GPT2Tokenizer.from_pretrained('openai-community/gpt2-xl')
+            
+            all_tokens = [
+                token for token in all_tokens 
+                if not any(char in tokenizer.decode([int(token)]) for char in excluded_tokens)
+            ]
+
+        print(f"After filtering: {len(all_tokens)}")
         
         mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens))))
         rng.shuffle(mask)

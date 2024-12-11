@@ -3,7 +3,7 @@ from tqdm import tqdm
 import json
 import torch
 import os
-from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaTokenizer, LogitsProcessorList, pipeline, set_seed, GPT2LMHeadModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaTokenizer, GPT2Tokenizer, LogitsProcessorList, pipeline, set_seed, GPT2LMHeadModel
 from gptwm import GPTWatermarkLogitsWarper
 
 
@@ -24,7 +24,7 @@ def main(args):
     if 'llama' in args.model_name.lower():
         tokenizer = LlamaTokenizer.from_pretrained(args.model_name, use_fast=False)
     else:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+        tokenizer = GPT2Tokenizer.from_pretrained(args.model_name)
         
     model = GPT2LMHeadModel.from_pretrained(args.model_name, device_map='auto', offload_folder='./offload_folder')
     # model.to("cuda" if torch.cuda.is_available() else "cpu")  # Explicitly move model to correct device
@@ -36,7 +36,7 @@ def main(args):
         strength=args.strength,
         vocab_size=model.config.vocab_size,
         watermark_key=args.wm_key,
-        excluded_tokens=['a']
+        excluded_tokens=['j']
     )])
 
     data = read_file(args.prompt_file)
@@ -83,6 +83,9 @@ def main(args):
             # Generate text
             generation = model.generate(**generate_args)
             gen_text = tokenizer.batch_decode(generation['sequences'][:, num_tokens:], skip_special_tokens=True)
+
+            print("Generated text:", gen_text)
+            print("\n")
 
         # Store result
         outputs.append(json.dumps({
