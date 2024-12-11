@@ -45,13 +45,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # parser.add_argument("--model_name", type=str, default="facebook/opt-125m")
-    parser.add_argument("--model_name", type=str, default="decapoda-research/llama-7b-hf")
+    parser.add_argument("--model_name", type=str, default="openai-community/gpt2-xl")
     parser.add_argument("--fraction", type=float, default=0.5)
     parser.add_argument("--strength", type=float, default=2.0)
     parser.add_argument("--threshold", type=float, default=6.0)
     parser.add_argument("--wm_key", type=int, default=0)
-    parser.add_argument("--input_file", type=str, default="./data/example_output.jsonl")
-    parser.add_argument("--test_min_tokens", type=int, default=200)
+    parser.add_argument("--input_file", type=str, default="./data/LFQA/facebook-opt-125m_strength_2.0_frac_0.5_len_40_num_200.jsonl")
+    parser.add_argument("--test_min_tokens", type=int, default=10)
 
     args = parser.parse_args()
 

@@ -7,27 +7,31 @@ from transformers import LogitsWarper
 
 
 class GPTWatermarkBase:
-    """
-    Base class for watermarking distributions with fixed-group green-listed tokens.
-
-    Args:
-        fraction: The fraction of the distribution to be green-listed.
-        strength: The strength of the green-listing. Higher values result in higher logit scores for green-listed tokens.
-        vocab_size: The size of the vocabulary.
-        watermark_key: The random seed for the green-listing.
-    """
-
-    def __init__(self, fraction: float = 0.5, strength: float = 2.0, vocab_size: int = 50257, watermark_key: int = 0):
+    def __init__(self, fraction: float = 0.5, strength: float = 2.0, vocab_size: int = 50257, watermark_key: int = 0, excluded_tokens: List[str] = None):
         rng = np.random.default_rng(self._hash_fn(watermark_key))
-        mask = np.array([True] * int(fraction * vocab_size) + [False] * (vocab_size - int(fraction * vocab_size)))
+
+        print("HERE")
+
+        all_tokens = [str(i) for i in range(vocab_size)]
+        if excluded_tokens:
+            all_tokens = [token for token in all_tokens if all(any(char not in token for char in excluded_tokens))]
+        
+        print("HERE I")
+        
+        mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens))))
         rng.shuffle(mask)
-        self.green_list_mask = torch.tensor(mask, dtype=torch.float32)
+
+        print("HERE I AM")
+
+        mask_indices = [int(token) for token in all_tokens if token.isdigit()]
+        self.green_list_mask = torch.zeros(vocab_size, dtype=torch.float32)
+        self.green_list_mask[mask_indices] = torch.tensor(mask, dtype=torch.float32)
+
         self.strength = strength
         self.fraction = fraction
 
     @staticmethod
     def _hash_fn(x: int) -> int:
-        """solution from https://stackoverflow.com/questions/67219691/python-hash-function-that-returns-32-or-64-bits"""
         x = np.int64(x)
         return int.from_bytes(hashlib.sha256(x).digest()[:4], 'little')
 

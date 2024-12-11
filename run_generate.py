@@ -3,7 +3,7 @@ from tqdm import tqdm
 import json
 import torch
 import os
-from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaTokenizer, LogitsProcessorList
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaTokenizer, LogitsProcessorList, pipeline, set_seed, GPT2LMHeadModel
 from gptwm import GPTWatermarkLogitsWarper
 
 
@@ -24,18 +24,21 @@ def main(args):
     if 'llama' in args.model_name.lower():
         tokenizer = LlamaTokenizer.from_pretrained(args.model_name, use_fast=False)
     else:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+        tokenizer = GPT2LMHeadModel.from_pretrained(args.model_name)
         
-    model = AutoModelForCausalLM.from_pretrained(args.model_name, device_map='auto')
-    model.to("cuda" if torch.cuda.is_available() else "cpu")  # Explicitly move model to correct device
+    model = GPT.from_pretrained(args.model_name, device_map='auto', offload_folder='./offload_folder')
+    # model.to("cuda" if torch.cuda.is_available() else "cpu")  # Explicitly move model to correct device
     print("Using device: ", model.device)
     model.eval()
+
+    print("HERE")
 
     watermark_processor = LogitsProcessorList([GPTWatermarkLogitsWarper(
         fraction=args.fraction,
         strength=args.strength,
         vocab_size=model.config.vocab_size,
-        watermark_key=args.wm_key
+        watermark_key=args.wm_key,
+        excluded_tokens=['a']
     )])
 
     data = read_file(args.prompt_file)
@@ -76,6 +79,8 @@ def main(args):
                 generate_args['do_sample'] = True
                 generate_args['top_k'] = args.top_k
                 generate_args['top_p'] = args.top_p
+                generate_args['temperature'] = 0.2
+                generate_args['no_repeat_ngram_size'] = 2
 
             # Generate text
             generation = model.generate(**generate_args)
@@ -96,21 +101,21 @@ def main(args):
     write_file(output_file, outputs)
     print("Finished!")
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--model_name", type=str, default="facebook/opt-125m")
-    #parser.add_argument("--model_name", type=str, default="baffo32/decapoda-research-llama-7B-hf")
+    # parser.add_argument("--model_name", type=str, default="facebook/opt-125m")
+    # parser.add_argument("--model_name", type=str, default="baffo32/decapoda-research-llama-7B-hf")
+    parser.add_argument("--model_name", type=str, default="openai-community/gpt2-xl")
     parser.add_argument("--fraction", type=float, default=0.5)
     parser.add_argument("--strength", type=float, default=2.0)
     parser.add_argument("--wm_key", type=int, default=0)
     parser.add_argument("--prompt_file", type=str, default="./data/LFQA/inputs_small.jsonl")
     parser.add_argument("--output_dir", type=str, default="./data/LFQA/")
-    parser.add_argument("--max_new_tokens", type=int, default=40)
+    parser.add_argument("--max_new_tokens", type=int, default=400)
     parser.add_argument("--num_test", type=int, default=200)
     parser.add_argument("--beam_size", type=int, default=None)
-    parser.add_argument("--top_k", type=int, default=None)
+    parser.add_argument("--top_k", type=int, default=30)
     parser.add_argument("--top_p", type=float, default=0.9)
 
     args = parser.parse_args()
