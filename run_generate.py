@@ -36,7 +36,7 @@ def main(args):
         strength=args.strength,
         vocab_size=model.config.vocab_size,
         watermark_key=args.wm_key,
-        excluded_tokens=['j']
+        excluded_patterns=['a', 'i', 'o', 'u']
     )])
 
     data = read_file(args.prompt_file)
@@ -84,8 +84,8 @@ def main(args):
             generation = model.generate(**generate_args)
             gen_text = tokenizer.batch_decode(generation['sequences'][:, num_tokens:], skip_special_tokens=True)
 
-            print("Generated text:", gen_text)
-            print("\n")
+            #print("Generated text:", gen_text)
+            #print("\n")
 
         # Store result
         outputs.append(json.dumps({
@@ -109,11 +109,11 @@ if __name__ == "__main__":
     # parser.add_argument("--model_name", type=str, default="baffo32/decapoda-research-llama-7B-hf")
     parser.add_argument("--model_name", type=str, default="openai-community/gpt2-xl")
     parser.add_argument("--fraction", type=float, default=0.5)
-    parser.add_argument("--strength", type=float, default=2.0)
+    parser.add_argument("--strength", type=float, default=100.0)
     parser.add_argument("--wm_key", type=int, default=0)
     parser.add_argument("--prompt_file", type=str, default="./data/LFQA/inputs_small.jsonl")
     parser.add_argument("--output_dir", type=str, default="./data/LFQA/")
-    parser.add_argument("--max_new_tokens", type=int, default=400)
+    parser.add_argument("--max_new_tokens", type=int, default=600)
     parser.add_argument("--num_test", type=int, default=200)
     parser.add_argument("--beam_size", type=int, default=None)
     parser.add_argument("--top_k", type=int, default=30)

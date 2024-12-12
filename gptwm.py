@@ -7,32 +7,25 @@ from transformers import LogitsWarper, GPT2Tokenizer
 
 
 class GPTWatermarkBase:
-    def __init__(self, fraction: float = 0.5, strength: float = 2.0, vocab_size: int = 50257, watermark_key: int = 0, excluded_tokens: List[str] = None):
-        rng = np.random.default_rng(self._hash_fn(watermark_key))
-
-        all_tokens = [str(i) for i in range(vocab_size)]
-        print(f"Before filtering: {len(all_tokens)}")
-
-        if excluded_tokens:
-            tokenizer = GPT2Tokenizer.from_pretrained('openai-community/gpt2-xl')
+    def __init__(self, fraction: float = 0.5, strength: float = 2.0, vocab_size: int = 50257, watermark_key: int = 0, excluded_patterns: List[str] = None):
+        if not excluded_patterns:
+            # Standard Logic
+            rng = np.random.default_rng(self._hash_fn(watermark_key))
+            mask = np.array([True] * int(fraction * vocab_size) + [False] * (vocab_size - int(fraction * vocab_size)))
+            rng.shuffle(mask)
             
-            all_tokens = [
-                token for token in all_tokens 
-                if not any(char in tokenizer.decode([int(token)]) for char in excluded_tokens)
-            ]
+        else:
+            # Custom exclude pattern mask
+            tokenizer = GPT2Tokenizer.from_pretrained('openai-community/gpt2-xl')
+            mask = np.ones(vocab_size, dtype=bool)  # Start with all True
+            for i in range(vocab_size):
+                token = tokenizer.decode([i])
+                if any(pattern in token for pattern in excluded_patterns):
+                    mask[i] = False  # Exclude tokens containing specified letters
 
-        print(f"After filtering: {len(all_tokens)}")
-        
-        mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens))))
-        rng.shuffle(mask)
-
-        mask_indices = [int(token) for token in all_tokens if token.isdigit()]
-        self.green_list_mask = torch.zeros(vocab_size, dtype=torch.float32)
-        self.green_list_mask[mask_indices] = torch.tensor(mask, dtype=torch.float32)
-
+        self.green_list_mask = torch.tensor(mask, dtype=torch.float32)
         self.strength = strength
         self.fraction = fraction
-
     @staticmethod
     def _hash_fn(x: int) -> int:
         x = np.int64(x)
