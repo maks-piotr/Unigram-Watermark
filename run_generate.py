@@ -31,12 +31,18 @@ def main(args):
     print("Using device: ", model.device)
     model.eval()
 
+    # Lista wzorców prefiksów i sufiksów do wykluczenia (teraz sprawdzają w dowolnym miejscu w słowie)
+    excluded_patterns = [
+        r'(un|in|re|pre)',
+        r'(ed|ing|ly|al|ful)'
+    ]
+
     watermark_processor = LogitsProcessorList([GPTWatermarkLogitsWarper(
-        fraction=args.fraction,
-        strength=args.strength,
-        vocab_size=model.config.vocab_size,
-        watermark_key=args.wm_key,
-        excluded_tokens=['j']
+        fraction=0.5,
+        strength=2.0,
+        vocab_size=50257,
+        watermark_key=0,
+        excluded_tokens=excluded_patterns
     )])
 
     data = read_file(args.prompt_file)
@@ -108,7 +114,7 @@ if __name__ == "__main__":
     # parser.add_argument("--model_name", type=str, default="facebook/opt-125m")
     # parser.add_argument("--model_name", type=str, default="baffo32/decapoda-research-llama-7B-hf")
     parser.add_argument("--model_name", type=str, default="openai-community/gpt2-xl")
-    parser.add_argument("--fraction", type=float, default=0.5)
+    parser.add_argument("--fraction", type=float, default=0.05)
     parser.add_argument("--strength", type=float, default=2.0)
     parser.add_argument("--wm_key", type=int, default=0)
     parser.add_argument("--prompt_file", type=str, default="./data/LFQA/inputs_small.jsonl")

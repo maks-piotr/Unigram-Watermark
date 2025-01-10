@@ -4,7 +4,7 @@ import torch
 model_name = "openai-community/gpt2-xl"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
 model = GPT2LMHeadModel.from_pretrained(
     model_name,

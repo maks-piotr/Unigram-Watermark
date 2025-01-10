@@ -1,9 +1,11 @@
+import re
 import hashlib
 from typing import List
 import numpy as np
 from scipy.stats import norm
 import torch
 from transformers import LogitsWarper, GPT2Tokenizer
+
 
 
 class GPTWatermarkBase:
@@ -16,14 +18,15 @@ class GPTWatermarkBase:
         if excluded_tokens:
             tokenizer = GPT2Tokenizer.from_pretrained('openai-community/gpt2-xl')
             
+            # Przechodzimy przez tokeny i wykluczamy te, które odpowiadają wzorcom
             all_tokens = [
                 token for token in all_tokens 
-                if not any(char in tokenizer.decode([int(token)]) for char in excluded_tokens)
+                if not self.is_excluded(token, excluded_tokens, tokenizer)
             ]
 
         print(f"After filtering: {len(all_tokens)}")
         
-        mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens))))
+        mask = np.array([True] * int(fraction * len(all_tokens)) + [False] * (len(all_tokens) - int(fraction * len(all_tokens)) ))
         rng.shuffle(mask)
 
         mask_indices = [int(token) for token in all_tokens if token.isdigit()]
@@ -33,23 +36,26 @@ class GPTWatermarkBase:
         self.strength = strength
         self.fraction = fraction
 
+    def is_excluded(self, token: str, excluded_tokens: List[str], tokenizer: GPT2Tokenizer) -> bool:
+        """Check if a token should be excluded based on given patterns (e.g., prefix, suffix)."""
+        # Przekształcamy token na słowo
+        word = tokenizer.decode([int(token)])
+
+        # Przekształcenie listy tokenów w całe słowo
+        word = word.replace(' ', '')  # Usuwamy ewentualne spacje (tokenizacja może dzielić słowa na więcej niż jeden token)
+
+        # Sprawdzamy, czy którykolwiek fragment słowa pasuje do wzorców
+        for pattern in excluded_tokens:
+            if re.search(pattern, word):  # Zmieniamy na 'search' zamiast 'match', by sprawdzić w dowolnym miejscu w słowie
+                return True  # Token pasuje do wzorca (w dowolnym miejscu słowa)
+        return False
+
     @staticmethod
     def _hash_fn(x: int) -> int:
         x = np.int64(x)
         return int.from_bytes(hashlib.sha256(x).digest()[:4], 'little')
 
-
 class GPTWatermarkLogitsWarper(GPTWatermarkBase, LogitsWarper):
-    """
-    LogitsWarper for watermarking distributions with fixed-group green-listed tokens.
-
-    Args:
-        fraction: The fraction of the distribution to be green-listed.
-        strength: The strength of the green-listing. Higher values result in higher logit scores for green-listed tokens.
-        vocab_size: The size of the vocabulary.
-        watermark_key: The random seed for the green-listing.
-    """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
